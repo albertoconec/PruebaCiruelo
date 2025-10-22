@@ -1,33 +1,40 @@
-🚚 El Ciruelo · Expediciones
+# 🚚 El Ciruelo · Expediciones
 
-Aplicación web desarrollada en PHP con MySQL, que permite a los carretilleros de la empresa El Ciruelo asignar palets a camiones dentro de una orden de carga.
+Aplicación web desarrollada en **PHP** con **MySQL**, que permite a los **carretilleros** de la empresa **El Ciruelo** asignar palets a camiones dentro de una **orden de carga**.
 
-⚙️ Cómo ejecutar el proyecto
+---
 
-Copia la carpeta del proyecto dentro de la ruta:
+## ⚙️ Cómo ejecutar el proyecto
 
-C:\xampp\htdocs\
+1. Copia la carpeta del proyecto dentro de la ruta:
 
+   ```
+   C:\xampp\htdocs\
+   ```
 
-Inicia XAMPP y asegúrate de que los servicios Apache y MySQL estén activos.
+2. Inicia **XAMPP** y asegúrate de que los servicios **Apache** y **MySQL** estén activos.
 
-Abre phpMyAdmin desde tu navegador:
+3. Abre **phpMyAdmin** desde tu navegador:
 
-http://localhost/phpmyadmin/
+   [http://localhost/phpmyadmin/](http://localhost/phpmyadmin/)
 
+4. Crea una nueva base de datos (por ejemplo, `expediciones`).
 
-Crea una nueva base de datos (por ejemplo, expediciones).
+5. Importa el archivo SQL que encontrarás en:
 
-Importa el archivo SQL que encontrarás en:
+   ```
+   /BBDD/sql
+   ```
 
-/BBDD/sql
+6. Abre el proyecto en el navegador:
 
+   [http://localhost/expediciones/Views/login.php](http://localhost/expediciones/Views/login.php)
 
-Abre el proyecto en el navegador:
+---
 
-http://localhost/expediciones/Views/login.php
+## 🗂️ Estructura del código
 
-🗂️ Estructura del código
+```
 expediciones/
 ├── Controllers/
 │   └── ExpedicionesController.php
@@ -46,35 +53,32 @@ expediciones/
 │   └── sql/               ← Script SQL con datos de prueba
 │
 └── README.md
+```
 
-🧠 Descripción rápida
+---
 
-Los carretilleros inician sesión seleccionando su nombre.
+## 🧠 Descripción rápida
 
-Pueden consultar las órdenes de carga abiertas o en curso.
+- Los carretilleros inician sesión seleccionando su **nombre**.  
+- Pueden consultar las **órdenes de carga abiertas o en curso**.  
+- En cada orden se muestran los **camiones disponibles**.  
+- Al introducir el **ID del palet** y seleccionar un camión:
+  - Se valida si el palet existe.  
+  - Se asigna y se cambia su estado a **ASIGNADO**.  
+  - Si el camión se llena, la orden pasa automáticamente a **CERRADA**.  
 
-En cada orden se muestran los camiones disponibles.
+---
 
-Al introducir el ID del palet y seleccionar un camión:
+## 💻 Tecnologías utilizadas
 
-Se valida si el palet existe.
+- **PHP 8**
+- **MySQL**
+- **HTML / CSS / Bootstrap**
+- **JavaScript**
+- **Arquitectura MVC**
 
-Se asigna y se cambia su estado a ASIGNADO.
+---
 
-Si el camión se llena, la orden pasa automáticamente a CERRADA.
+## 👤 Autor
 
-💻 Tecnologías utilizadas
-
-PHP 8
-
-MySQL
-
-HTML / CSS / Bootstrap
-
-JavaScript
-
-Arquitectura MVC
-
-👤 Autor
-
-Alberto Martínez Muñoz
+**Alberto Martínez Muñoz**
