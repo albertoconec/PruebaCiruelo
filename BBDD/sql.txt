@@ -1,0 +1,125 @@
+
+DROP DATABASE IF EXISTS expediciones;
+CREATE DATABASE expediciones CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE expediciones;
+
+CREATE TABLE usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(150) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  rol ENUM('carretillero','admin','encargado') NOT NULL DEFAULT 'carretillero',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE carretillas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  codigo VARCHAR(50) NOT NULL UNIQUE,
+  modelo VARCHAR(80) NOT NULL,
+  estado ENUM('DISPONIBLE','ASIGNADA','MANTENIMIENTO') DEFAULT 'DISPONIBLE',
+  usuario_id INT DEFAULT NULL,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
+CREATE TABLE camiones (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  matricula VARCHAR(20) NOT NULL UNIQUE,
+  capacidad INT NOT NULL
+);
+
+CREATE TABLE ordenes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  codigo VARCHAR(50) NOT NULL UNIQUE,
+  cliente VARCHAR(150) NOT NULL,
+  estado ENUM('ABIERTA','EN_CURSO','CERRADA') DEFAULT 'ABIERTA',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE orden_camion (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  orden_id INT NOT NULL,
+  camion_id INT NOT NULL,
+  estado ENUM('ABIERTA','EN_CURSO','CERRADA') DEFAULT 'ABIERTA',
+  ocupados INT NOT NULL DEFAULT 0,
+  asignada_at DATETIME DEFAULT NULL,
+  FOREIGN KEY (orden_id) REFERENCES ordenes(id) ON DELETE CASCADE,
+  FOREIGN KEY (camion_id) REFERENCES camiones(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_orden_camion (orden_id, camion_id)
+);
+
+CREATE TABLE palets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  codigo VARCHAR(50) NOT NULL UNIQUE,
+  estado ENUM('ETIQUETADO','ASIGNADO','CARGADO') DEFAULT 'ETIQUETADO',
+  peso DECIMAL(8,2) DEFAULT 0,
+  unidades INT DEFAULT 0,
+  orden_camion_id INT DEFAULT NULL,
+  usuario_id INT DEFAULT NULL,
+  FOREIGN KEY (orden_camion_id) REFERENCES orden_camion(id) ON DELETE SET NULL,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_palets_orden_camion ON palets(orden_camion_id);
+CREATE INDEX idx_ordencamion_orden ON orden_camion(orden_id);
+CREATE INDEX idx_ordencamion_camion ON orden_camion(camion_id);
+
+-- === USUARIOS ===
+INSERT INTO usuarios (nombre, email, rol) VALUES
+('Alberto Conejero', 'alberto@ciruelo.test', 'carretillero'),
+('Laura López', 'laura@ciruelo.test', 'carretillero'),
+('Carlos Ruiz', 'carlos@ciruelo.test', 'carretillero'),
+('Marta García', 'marta@ciruelo.test', 'admin'),
+('Javier Encargado', 'javier@ciruelo.test', 'encargado');
+
+-- === CARRETILLAS ===
+INSERT INTO carretillas (codigo, modelo, estado, usuario_id) VALUES
+('CRT-01', 'Linde E16', 'ASIGNADA', 1),
+('CRT-02', 'Still RX20', 'ASIGNADA', 2),
+('CRT-03', 'BT Levio', 'DISPONIBLE', NULL),
+('CRT-04', 'Jungheinrich EFG', 'MANTENIMIENTO', NULL);
+
+-- === CAMIONES ===
+INSERT INTO camiones (matricula, capacidad) VALUES
+('1234-ABC', 4),
+('5678-DEF', 3),
+('9012-GHI', 2),
+('3456-JKL', 5),
+('2222-MNO', 2),
+('7777-XYZ', 6);
+
+-- === ORDENES ===
+INSERT INTO ordenes (codigo, cliente, estado) VALUES
+('ORD-2025-001', 'Mercadona Valencia', 'EN_CURSO'),
+('ORD-2025-002', 'Carrefour Madrid',  'ABIERTA'),
+('ORD-2025-003', 'Lidl Barcelona',    'ABIERTA'),
+('ORD-2025-004', 'Dia Alicante',      'EN_CURSO');
+
+-- === ORDEN_CAMION ===
+INSERT INTO orden_camion (orden_id, camion_id, estado, ocupados, asignada_at) VALUES
+(1, 1, 'EN_CURSO', 2, NOW()),
+(1, 2, 'ABIERTA',  0, NOW()),
+(2, 3, 'ABIERTA',  1, NOW()),
+(2, 4, 'ABIERTA',  0, NOW()),
+(3, 5, 'CERRADA',  2, NOW()),
+(3, 6, 'ABIERTA',  0, NOW()),
+(4, 2, 'EN_CURSO', 1, NOW());
+
+-- === PALETS ===
+INSERT INTO palets (codigo, estado, peso, unidades, orden_camion_id, usuario_id) VALUES
+('P-0001', 'ASIGNADO', 820.50, 1, 1, 1),
+('P-0002', 'ASIGNADO', 815.20, 1, 1, 1),
+('P-0003', 'ASIGNADO', 790.00, 1, 3, 2),
+('P-0004', 'ASIGNADO', 805.10, 1, 5, 3),
+('P-0005', 'ASIGNADO', 799.90, 1, 5, 2),
+('P-0006', 'ASIGNADO', 830.00, 1, 7, 1),
+('P-0007', 'ETIQUETADO', 0, 1, NULL, NULL),
+('P-0008', 'ETIQUETADO', 0, 1, NULL, NULL),
+('P-0009', 'ETIQUETADO', 0, 1, NULL, NULL),
+('P-0010', 'ETIQUETADO', 0, 1, NULL, NULL),
+('P-0011', 'ETIQUETADO', 0, 1, NULL, NULL),
+('P-0012', 'ETIQUETADO', 0, 1, NULL, NULL),
+('P-0013', 'ETIQUETADO', 0, 1, NULL, NULL),
+('P-0014', 'ETIQUETADO', 0, 1, NULL, NULL),
+('P-0015', 'ETIQUETADO', 0, 1, NULL, NULL),
+('P-0016', 'ETIQUETADO', 0, 1, NULL, NULL),
+('P-0017', 'ETIQUETADO', 0, 1, NULL, NULL),
+('P-0018', 'ETIQUETADO', 0, 1, NULL, NULL);
