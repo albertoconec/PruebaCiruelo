@@ -40,7 +40,7 @@ expediciones/
 │   └── success.php        ← Confirmación de asignación
 │
 ├── BBDD/
-│   └── expediciones.sql   ← Script SQL con datos de prueba
+│   └── sql   ← Script SQL con datos de prueba
 │
 └── README.md
 
