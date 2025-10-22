@@ -3,7 +3,15 @@ require_once __DIR__ . "/../Controllers/ExpedicionesController.php";
 session_start();
 ini_set('display_errors',1); error_reporting(E_ALL);
 
+if (empty($_SESSION['usuario_id'])) {
+  header("Location: login.php");
+  exit;
+}
+$usuarioId = (int)$_SESSION['usuario_id'];
+
 $ctrl = new ExpedicionesController();
+$user = $ctrl->getUsuario($usuarioId);
+
 $ordenId = (int)($_GET['orden_id'] ?? $_POST['orden_id'] ?? 0);
 if (!$ordenId) { header("Location: index.php"); exit; }
 
@@ -16,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['asignar'])) {
   if (!$id_camion || !$id_palet) {
     $msg="Selecciona un camión e introduce un id_palet."; $tipo="danger";
   } else {
-    $res = $ctrl->asignar($ordenId, $id_palet, $id_camion);
+    $res = $ctrl->asignar($ordenId, $id_palet, $id_camion, $usuarioId);
     if ($res['ok'] ?? false) {
       $q = http_build_query([
         'orden_id'     => $ordenId,
@@ -26,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['asignar'])) {
         'usados'       => $res['ocupacion']['usados'] ?? 0,
         'capacidad'    => $res['ocupacion']['capacidad'] ?? 0,
         'estado_carga' => $res['orden']['estado_carga'] ?? '',
+        'usuario'      => $user['nombre'] ?? '',
       ]);
       header("Location: success.php?".$q);
       exit;
@@ -55,7 +64,10 @@ $cargas = $ctrl->listarCargasDeOrden($ordenId);
 </head>
 <body class="p-3">
   <div class="container" style="max-width:560px;">
-    <a href="index.php" class="text-decoration-none">&larr; Volver</a>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <a href="index.php" class="text-decoration-none">&larr; Volver</a>
+      <span class="badge bg-info text-dark">Carretillero: <?= htmlspecialchars($user['nombre'] ?? 'N/D') ?></span>
+    </div>
     <h4 class="mt-2 mb-3">Asignar palet a camión</h4>
 
     <?php if ($msg): ?><div class="alert alert-<?= htmlspecialchars($tipo) ?>"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
@@ -64,12 +76,11 @@ $cargas = $ctrl->listarCargasDeOrden($ordenId);
       <form method="post">
         <input type="hidden" name="orden_id" value="<?= $ordenId ?>">
 
-        <!-- Camiones de la orden -->
-        <div class="mb-3">
-          <label class="form-label text-light">Camión de la orden</label>
+        <div class="mb-3 text-light">
+          <label class="form-label">Camión de la orden</label>
           <select name="id_camion" class="form-select" required>
             <?php if (!$cargas): ?>
-              <option value="">(Esta orden no tiene camiones asignados)</option>
+              <option value="">(Esta orden no tiene camiones asignados abiertos)</option>
             <?php else: foreach ($cargas as $c): 
               $restantes = max(0, (int)$c['capacidad'] - (int)$c['ocupados']);
             ?>
@@ -80,9 +91,8 @@ $cargas = $ctrl->listarCargasDeOrden($ordenId);
           </select>
         </div>
 
-        <!-- ID de palet a mano -->
-        <div class="mb-3">
-          <label class="form-label text-light">id_palet</label>
+        <div class="mb-3 text-light">
+          <label class="form-label">id_palet</label>
           <input class="form-control" type="number" name="id_palet" placeholder="Escribe el ID del palet" required>
         </div>
 

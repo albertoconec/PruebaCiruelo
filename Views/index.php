@@ -1,8 +1,15 @@
 <?php
 require_once __DIR__ . "/../Controllers/ExpedicionesController.php";
 session_start();
+
+if (empty($_SESSION['usuario_id'])) {
+  header("Location: login.php");
+  exit;
+}
+
 $ctrl = new ExpedicionesController();
 $ordenes = $ctrl->listarOrdenes();
+$user    = $ctrl->getUsuario((int)$_SESSION['usuario_id']);
 ?>
 <!doctype html>
 <html lang="es">
@@ -16,31 +23,39 @@ $ordenes = $ctrl->listarOrdenes();
     .card{background:#1a1d21;border:1px solid #2a2f35;border-radius:12px}
     .badge{border-radius:10px}
     .btn-success{background:#30c375;border:none}
+    a{color:#9cd3ff}
   </style>
 </head>
 <body class="p-3">
   <div class="container" style="max-width:560px;">
-    <h4 class="mb-3">El Ciruelo · Órdenes de carga</h4>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="m-0">Órdenes de carga</h4>
+      <div>
+        <span class="badge bg-info text-dark me-2">Carretillero: <?= htmlspecialchars($user['nombre'] ?? 'N/D') ?></span>
+        <a href="logout.php" class="text-decoration-none">Salir</a>
+      </div>
+    </div>
 
     <?php if (!$ordenes): ?>
       <div class="alert alert-warning">No hay órdenes abiertas ni en curso.</div>
     <?php endif; ?>
 
-    <?php foreach ($ordenes as $o): ?>
-      <div class="card p-3 mb-3 text-light">
+    <?php foreach ($rondenes ?? $ordenes as $o): ?>
+      <div class="card p-3 mb-3">
         <div class="d-flex align-items-center gap-2 mb-2">
           <span class="badge <?= $o['estado']==='EN_CURSO'?'bg-warning text-dark':'bg-primary' ?>">
             <?= htmlspecialchars($o['estado']) ?>
-          </span> 
+          </span>
         </div>
-        <div class="fw-semibold"><?= htmlspecialchars($o['codigo']) ?></div>
-        <div class="text-secondary mb-3"><?= htmlspecialchars($o['cliente']) ?></div>
+        <div class="fw-semibold text-light"><?= htmlspecialchars($o['codigo']) ?></div>
+        <div class="text-light mb-3"><?= htmlspecialchars($o['cliente']) ?></div>
+
         <form method="get" action="asignar.php" class="m-0">
           <input type="hidden" name="orden_id" value="<?= (int)$o['id'] ?>">
           <button class="btn btn-success w-100">Seleccionar orden</button>
         </form>
       </div>
     <?php endforeach; ?>
-  </div>
+  </div> 
 </body>
-</html> 
+</html>

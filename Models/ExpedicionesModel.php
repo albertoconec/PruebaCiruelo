@@ -8,7 +8,21 @@ class ExpedicionesModel {
         $this->db = (new ConexionPDOModel())->getConexion();
     }
 
-    /* Órdenes visibles (ABIERTA / EN_CURSO) */
+    /* === Usuarios === */
+    public function getCarretilleros(): array {
+        $st = $this->db->prepare("SELECT id, nombre FROM usuarios WHERE rol = 'carretillero' ORDER BY nombre ASC");
+        $st->execute();
+        return $st->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getUsuarioById(int $id): ?array {
+        $st = $this->db->prepare("SELECT id, nombre, email, rol FROM usuarios WHERE id = ?");
+        $st->execute([$id]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    /* === Órdenes & cargas === */
     public function getOrdenesVisibles(): array {
         $sql = "SELECT id, codigo, cliente, estado
                 FROM ordenes
@@ -19,22 +33,19 @@ class ExpedicionesModel {
         return $st->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /* Cargas (camiones) de una orden, con 'ocupados' y capacidad */
     public function getCargasByOrden(int $ordenId): array {
-    $sql = "SELECT oc.id, oc.estado, oc.ocupados,
-                   c.id AS id_camion, c.matricula, c.capacidad
-            FROM orden_camion oc
-            JOIN camiones c ON c.id = oc.camion_id
-            WHERE oc.orden_id = ? 
-              AND oc.estado IN ('ABIERTA','EN_CURSO')
-            ORDER BY oc.id DESC";
-    $st = $this->db->prepare($sql);
-    $st->execute([$ordenId]);
-    return $st->fetchAll(PDO::FETCH_ASSOC);
-}
+        $sql = "SELECT oc.id, oc.estado, oc.ocupados,
+                       c.id AS id_camion, c.matricula, c.capacidad
+                FROM orden_camion oc
+                JOIN camiones c ON c.id = oc.camion_id
+                WHERE oc.orden_id = ?
+                  AND oc.estado IN ('ABIERTA','EN_CURSO')
+                ORDER BY oc.id DESC";
+        $st = $this->db->prepare($sql);
+        $st->execute([$ordenId]);
+        return $st->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-
-    /* Palet por id */
     private function getPaletById(int $id_palet): ?array {
         $st = $this->db->prepare("SELECT id, codigo, estado, orden_camion_id FROM palets WHERE id = ?");
         $st->execute([$id_palet]);
@@ -42,15 +53,12 @@ class ExpedicionesModel {
         return $row ?: null;
     }
 
-    /* Cierra una carga (orden_camion) */
     private function cerrarCarga(int $orden_camion_id): void {
         $st = $this->db->prepare("UPDATE orden_camion SET estado='CERRADA' WHERE id=?");
         $st->execute([$orden_camion_id]);
     }
 
-    /* ▶️ Si la orden está ABIERTA y alguna carga tiene palets -> poner EN_CURSO */
     private function ponerOrdenEnCursoSiTienePalets(int $ordenId): void {
-        // ¿Alguna carga de la orden tiene palets?
         $st = $this->db->prepare(
             "SELECT COUNT(*) 
              FROM orden_camion 
@@ -60,7 +68,6 @@ class ExpedicionesModel {
         $hayPalets = (int)$st->fetchColumn() > 0;
 
         if ($hayPalets) {
-            // Pasa la orden a EN_CURSO si sigue ABIERTA
             $up = $this->db->prepare(
                 "UPDATE ordenes 
                  SET estado = 'EN_CURSO' 
@@ -70,7 +77,6 @@ class ExpedicionesModel {
         }
     }
 
-    /* ⛔ Si TODAS las cargas están CERRADAS -> cerrar la orden */
     private function cerrarOrdenSiTodasCargasCerradas(int $ordenId): void {
         $st = $this->db->prepare(
             "SELECT SUM(estado IN ('ABIERTA','EN_CURSO')) AS abiertas
@@ -87,26 +93,18 @@ class ExpedicionesModel {
     }
 
     /**
-     * Opción 1 (requerida): Recibe id_palet e id_camion y la orden seleccionada.
-     * Valida:
-     *   - Palet existe, está ETIQUETADO y sin asignar
-     *   - El camión pertenece a la orden y la carga está ABIERTA/EN_CURSO
-     *   - Hay capacidad disponible (ocupados < capacidad)
-     * Acción:
-     *   - Marca palet ASIGNADO y lo enlaza a la carga (orden_camion_id)
-     *   - Incrementa 'ocupados'
-     *   - Si estaba ABIERTA y ahora tiene palets -> EN_CURSO (carga y orden)
-     *   - Si se llena -> CERRADA (carga) y si todas cerradas -> CERRADA (orden)
+     * Recibe: ordenId, id_palet, id_camion, usuarioId (carretillero en sesión)
+     * - Valida palet, carga, capacidad
+     * - Asigna palet y setea palets.usuario_id
+     * - Cambia estados (EN_CURSO/CERRADA) y sincroniza orden
      */
-    public function asignarPaletACamionEnOrden(int $ordenId, int $id_palet, int $id_camion): array {
-        // 0) Palet existe
+    public function asignarPaletACamionEnOrden(int $ordenId, int $id_palet, int $id_camion, int $usuarioId): array {
         $palet = $this->getPaletById($id_palet);
         if (!$palet) return ['ok'=>false, 'error'=>'El palet no existe'];
 
         try {
             $this->db->beginTransaction();
 
-            // 1) Bloquear la carga de esa orden y camión
             $st = $this->db->prepare(
                 "SELECT oc.id, oc.estado, oc.ocupados,
                         c.capacidad, c.matricula
@@ -124,20 +122,19 @@ class ExpedicionesModel {
             $cap      = (int)$carga['capacidad'];
             if ($ocupados >= $cap) throw new Exception('Camión sin capacidad');
 
-            // 2) Validar palet
             if ($palet['estado'] !== 'ETIQUETADO') throw new Exception('El palet no está en ETIQUETADO');
             if (!is_null($palet['orden_camion_id'])) throw new Exception('El palet ya está asignado');
 
-            // 3) Asignar palet
-            $up = $this->db->prepare("UPDATE palets SET estado='ASIGNADO', orden_camion_id=? WHERE id=?");
-            $up->execute([(int)$carga['id'], $id_palet]);
+            // asignar palet + traza de usuario
+            $up = $this->db->prepare("UPDATE palets SET estado='ASIGNADO', orden_camion_id=?, usuario_id=? WHERE id=?");
+            $up->execute([(int)$carga['id'], $usuarioId, $id_palet]);
 
-            // 4) Incrementar ocupados
-            $up2 = $this->db->prepare("UPDATE orden_camion SET ocupados = ocupados + 1 WHERE id = ?");
-            $up2->execute([(int)$carga['id']]);
+            // incrementar ocupación
+            $this->db->prepare("UPDATE orden_camion SET ocupados = ocupados + 1 WHERE id = ?")
+                     ->execute([(int)$carga['id']]);
             $ocupadosDespues = $ocupados + 1;
 
-            // 5) Si la carga estaba ABIERTA y ahora tiene palets -> poner EN_CURSO
+            // actualizar estado carga ABIERTA -> EN_CURSO
             $estadoCarga = $carga['estado'];
             if ($estadoCarga === 'ABIERTA' && $ocupadosDespues > 0) {
                 $this->db->prepare("UPDATE orden_camion SET estado='EN_CURSO' WHERE id=?")
@@ -145,16 +142,16 @@ class ExpedicionesModel {
                 $estadoCarga = 'EN_CURSO';
             }
 
-            // 🔄 Sincronizar la ORDEN (si estaba ABIERTA y ya hay palets en alguna carga -> EN_CURSO)
+            // sincronizar orden ABIERTA -> EN_CURSO si ya hay palets
             $this->ponerOrdenEnCursoSiTienePalets($ordenId);
 
-            // 6) Cerrar carga si se llenó
+            // cerrar carga si se llenó
             if ($ocupadosDespues >= $cap) {
                 $this->cerrarCarga((int)$carga['id']);
                 $estadoCarga = 'CERRADA';
             }
 
-            // 🔄 Si todas las cargas han quedado cerradas, cerrar también la ORDEN
+            // si todas las cargas cerradas, cerrar orden
             $this->cerrarOrdenSiTodasCargasCerradas($ordenId);
 
             $this->db->commit();

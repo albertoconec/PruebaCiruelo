@@ -7,6 +7,7 @@ $usados       = (int)($_GET['usados'] ?? 0);
 $capacidad    = (int)($_GET['capacidad'] ?? 0);
 $estadoCarga  = htmlspecialchars($_GET['estado_carga'] ?? '');
 $restantes    = max(0, $capacidad - $usados);
+$usuario      = htmlspecialchars($_GET['usuario'] ?? '');
 ?>
 <!doctype html>
 <html lang="es">
@@ -41,6 +42,7 @@ $restantes    = max(0, $capacidad - $usados);
 
     <div class="panel mb-3">
       <div class="mb-2 fw-semibold">Resumen</div>
+      <div class="row-info"><div class="label">Hecho por</div><div><?= $usuario ?: 'N/D' ?></div></div>
       <div class="row-info"><div class="label">Palet</div><div>#<?= $id_palet ?></div></div>
       <div class="row-info"><div class="label">Camión</div><div><?= $matricula ?> (id <?= $id_camion ?>)</div></div>
       <div class="row-info"><div class="label">Orden</div><div>#<?= $ordenId ?></div></div>

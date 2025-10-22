@@ -14,8 +14,15 @@ class ExpedicionesController {
         return $this->model->getCargasByOrden($ordenId);
     }
 
-    // ⬇️ Lógica exacta requerida: recibe id_palet e id_camion (+ id de la orden seleccionada)
-    public function asignar(int $ordenId, int $id_palet, int $id_camion): array {
-        return $this->model->asignarPaletACamionEnOrden($ordenId, $id_palet, $id_camion);
+    public function listarCarretilleros() {
+        return $this->model->getCarretilleros();
+    }
+
+    public function getUsuario(int $id) {
+        return $this->model->getUsuarioById($id);
+    }
+
+    public function asignar(int $ordenId, int $id_palet, int $id_camion, int $usuarioId): array {
+        return $this->model->asignarPaletACamionEnOrden($ordenId, $id_palet, $id_camion, $usuarioId);
     }
 }
