@@ -1,4 +1,4 @@
-# 🚚 El Ciruelo · Expediciones
+# 🚚 El Ciruelo · Expediciones (Opción 1)
 
 Aplicación web desarrollada en **PHP** con **MySQL**, que permite a los **carretilleros** de la empresa **El Ciruelo** asignar palets a camiones dentro de una **orden de carga**.
 
