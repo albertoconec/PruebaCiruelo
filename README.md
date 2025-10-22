@@ -12,12 +12,12 @@ C:\xampp\htdocs\
 2. Inicia **XAMPP** y asegúrate de que **Apache** y **MySQL** estén activos.
 3. Entra en **phpMyAdmin** (`http://localhost/phpmyadmin/`) y crea la base de datos:
 ```sql
-CREATE DATABASE expediciones;
+
 
 
 Importa el archivo SQL que encontrarás en:
 
-/BBDD/expediciones.sql
+/BBDD/sql
 
 
 Abre el proyecto en el navegador:
