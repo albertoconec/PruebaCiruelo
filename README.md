@@ -18,7 +18,7 @@ Aplicación web desarrollada en **PHP** con **MySQL**, que permite a los **carre
 
    [http://localhost/phpmyadmin/](http://localhost/phpmyadmin/)
 
-4. Crea una nueva base de datos (por ejemplo, `expediciones`).
+4. Crea una nueva base de datos (llamada, `expediciones`).
 
 5. Importa el archivo SQL que encontrarás en:
 
