@@ -1,19 +1,22 @@
-# 🚚 El Ciruelo · Expediciones
+🚚 El Ciruelo · Expediciones
 
-Aplicación web desarrollada en **PHP** con **MySQL**, que permite a los **carretilleros** de la empresa **El Ciruelo** asignar palets a camiones dentro de una orden de carga.
+Aplicación web desarrollada en PHP con MySQL, que permite a los carretilleros de la empresa El Ciruelo asignar palets a camiones dentro de una orden de carga.
 
----
+⚙️ Cómo ejecutar el proyecto
 
-## ⚙️ Cómo ejecutar el proyecto
+Copia la carpeta del proyecto dentro de la ruta:
 
-1. Copia la carpeta `expediciones` dentro de:
 C:\xampp\htdocs\
 
-2. Inicia **XAMPP** y asegúrate de que **Apache** y **MySQL** estén activos.
-3. Entra en **phpMyAdmin** (`http://localhost/phpmyadmin/`) y crea la base de datos:
+
+Inicia XAMPP y asegúrate de que los servicios Apache y MySQL estén activos.
+
+Abre phpMyAdmin desde tu navegador:
+
+http://localhost/phpmyadmin/
 
 
-
+Crea una nueva base de datos (por ejemplo, expediciones).
 
 Importa el archivo SQL que encontrarás en:
 
@@ -40,7 +43,7 @@ expediciones/
 │   └── success.php        ← Confirmación de asignación
 │
 ├── BBDD/
-│   └── sql   ← Script SQL con datos de prueba
+│   └── sql/               ← Script SQL con datos de prueba
 │
 └── README.md
 
@@ -72,4 +75,6 @@ JavaScript
 
 Arquitectura MVC
 
-👤 Autor: Alberto Martínez Muñoz
+👤 Autor
+
+Alberto Martínez Muñoz
